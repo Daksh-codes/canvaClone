@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import ContentEditable from "react-contenteditable";
+import Selected from "./Selected";
 
 function CanvasWorkspace({ elements, setElements }) {
   const svgWidth = 800;
   const svgHeight = 600;
 
-  const [selectedElements, setSelectedElements] = useState([]);
+  const [selectedElement, setSelectedElement] = useState(null);
   const [moving, setMoving] = useState(false);
   const [movingElement, setMovingElement] = useState(null);
   const [resizing, setResizing] = useState(false);
@@ -42,8 +43,8 @@ function CanvasWorkspace({ elements, setElements }) {
   }, [moving, resizing]);
 
   const selectElements = (element) => {
-    console.log(element);
-    setSelectedElements([element]);
+    console.log(selectElements)
+    setSelectedElement(element);
   };
 
   const moveStart = (e, element) => {
@@ -66,13 +67,24 @@ function CanvasWorkspace({ elements, setElements }) {
             : element
         )
       );
+      setSelectedElement((element) =>
+        {
+          return element.id === movingElement.id
+            ? {
+                ...element,
+                x: pos.x - element.width / 2,
+                y: pos.y - element.height / 2,
+              }
+            : element
+        }
+      )
     }
   };
 
   const moveEnd = () => {
-    setSelectedElements([]);
     setMoving(false);
     setMovingElement(null);
+    setSelectedElement(null)
   };
 
   const resizeHandles = [
@@ -85,9 +97,8 @@ function CanvasWorkspace({ elements, setElements }) {
   const resizeStart = (e, element, handle) => {
     e.preventDefault();
     setResizing(true);
-    setResizingElement({ element, handle });
-  };
-
+   
+  }
   const resize = (e) => {
     const pos = getMousePos(e);
     if (resizing && resizingElement) {
@@ -101,7 +112,6 @@ function CanvasWorkspace({ elements, setElements }) {
           handle.y === "top"
             ? element.height + (element.y - pos.y)
             : pos.y - element.y;
-
         setElements((elements) =>
           elements.map((el) =>
             el.id === element.id
@@ -137,11 +147,7 @@ function CanvasWorkspace({ elements, setElements }) {
     );
   };
 
-  // const text = useRef("");
-
-  const handleBlur = () => {
-    // console.log(text.current);
-  };
+ console.log(selectedElement)
 
   return (
     <div className="relative top-[50px] left-[400px]">
@@ -152,10 +158,6 @@ function CanvasWorkspace({ elements, setElements }) {
         {elements &&
           elements.map((element, index) => {
             if (element.type === "svg") {
-              const isSelected = selectedElements.some(
-                (selectedElement) => selectedElement.id === element.id
-              );
-
               return (
                 <g key={index}>
                   <image
@@ -166,97 +168,42 @@ function CanvasWorkspace({ elements, setElements }) {
                     x={element.x}
                     y={element.y}
                     onClick={() => selectElements(element)}
-                    onMouseDown={(e) => moveStart(e, element)}
-                    onMouseOver={(e) => isSelected && resizeStart(e, element)}
+                    onMouseDown={(e) => selectedElement && moveStart(e, element)}
+                    onMouseOver={(e) =>
+                      selectedElement && resizeStart(e, element)
+                    }
                   />
-                  {isSelected &&
-                    resizeHandles.map((handle, handleIndex) => (
-                      <rect
-                        key={handleIndex}
-                        x={
-                          handle.x === "left"
-                            ? element.x - 5
-                            : element.x + element.width - 5
-                        }
-                        y={
-                          handle.y === "top"
-                            ? element.y - 5
-                            : element.y + element.height - 5
-                        }
-                        width={10}
-                        height={10}
-                        fill="#3498db"
-                        style={{ cursor: handle.cursor }}
-                        onMouseDown={(e) => resizeStart(e, element, handle)}
-                      />
-                    ))}
-                  {isSelected && (
-                    <rect
-                      key={element.id}
-                      width={element.width}
-                      height={element.height}
-                      x={element.x}
-                      y={element.y}
-                      stroke="blue"
-                      fill="none"
-                    />
-                  )}
+                  <Selected selectedElement={selectedElement} setSelectedElement={setSelectedElement} />
                 </g>
               );
             } else if (element.type === "text") {
-              const isSelected = selectedElements.some(
-                (selectedElement) => selectedElement.id === element.id
-              );
-              // console.log(element);
               return (
-                <foreignObject
-                  key={index}
-                  x={element.x}
-                  y={element.y}
-                  width={element.width}
-                  height={element.height}
-                  onDoubleClick={() => selectElements(element)}
-                >
-                  <div
-                    contentEditable="true"
-                    style={{
-                      fontFamily: "Arial",
-                      fontSize: "20",
-                      color: "black",
-                      width: "100%",
-                      height: "100%",
-                      boxSizing: "border-box",
-                      overflow: "hidden",
-                    }}
-                    dangerouslySetInnerHTML={{ __html: element.text }}
-                    onBlur={handleBlur}
-                    
-                    onMouseDown={(e) => moveStart(e, element)}
-                    onMouseOver={(e) => isSelected && resizeStart(e, element)}
-                  />
-                </foreignObject>
-              );
-            } else if (element.type === "text") {
-              // console.log(element);
-              return (
-                <foreignObject
-                  x={element.x}
-                  y={element.y}
-                  width={element.width}
-                  height={element.height}
-                  className="relative"
-                >
-                  <h1 onClick={() => selectElements(element)} className="w-max">
-                    {element.text}
-                  </h1>
-                  <input
-                    className={`${changeText ? "" : "hidden"}  absolute top-0 `}
-                    type="text"
-                    name=""
-                    value={element.text}
-                    onChange={(e) => setText(e, element)}
-                  />
-                </foreignObject>
+                <g key={index}>
+                  <foreignObject
+                    x={element.x}
+                    y={element.y}
+                    width={element.width}
+                    height={element.height}
+                  >
+                    <div
+                      contentEditable={true}
+                      style={{
+                        fontFamily: "Arial",
+                        fontSize: "20px",
+                        color: "black",
+                        width: "100%",
+                        height: "100%",
+                        boxSizing: "border-box",
+                        overflow: "hidden",
+                      }}
+                      dangerouslySetInnerHTML={{ __html: element.text }}
+                      ref={textRef}
+                      onMouseDown={(e) => moveStart(e, element)}
+                      onClick={() => selectElements(element)}
+                    />
+                  </foreignObject>
+                  <Selected selectedElement={selectedElement} setSelectedElement={setSelectedElement} />
+                </g>
               );
             }
 

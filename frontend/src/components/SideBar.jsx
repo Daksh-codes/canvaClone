@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Canvas } from "./Canvas";
 import svg from "../assets/grass4.svg";
 // import { drawSvg } from "./CanvasWorkspace";
 import { svgElements } from "../svgAssets";
 // import { draw } from "./Canvas";
+import axios from "axios"
+
+
 
 const DraggableShape = ({ type, onDragStart }) => {
   return (
@@ -25,16 +28,26 @@ function Expand(value, sendSvg , sendText) {
   const [expand, setExpand] = useState(true);
   const [expandValue, setExpandValue] = useState(value);
   const [selectedShape, setSelectedShape] = useState("rectangle");
+  const [svgData , setSvgData] = useState([])
 
   // console.log(svgElements);
+
+  useEffect(()=> {
+    const getSvgElements = async () => {
+      const res = await axios.get("http://localhost:5000/api/assets/")
+      console.log(res.data)
+      setSvgData(res.data)
+    }
+    getSvgElements()
+  } , [])
 
   return (
     <div className="absolute w-72 h-screen bg-neutral-800 top-0 left-[81px] ">
       {value}
 
       {value === "elements" && (
-        <div className="flex">
-          {svgElements.map((element) => {
+        <div className="flex flex-wrap">
+          {svgData && svgData.map((element) => {
             return (
               <div
                 className="w-1/2 flex flex-col items-center"
