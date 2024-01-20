@@ -1,22 +1,22 @@
-import React, { useState } from 'react'
-import SideBar from '../components/SideBar'
-import {Canvas} from '../components/Canvas'
-import Canvas2 from '../components/Canvas2'
-import CanvasWorkspace from '../components/CanvasWorkspace'
-import Navbar from '../components/navbar'
+import React, { useState } from "react";
+import SideBar from "../components/sidebar/SideBar";
+import CanvasWorkspace from "../components/CanvasWorkspace";
+import Navbar from "../components/navbar";
+import { Provider } from "react-redux";
+import { elementsStore } from "../store";
 
 function Home() {
-
-  const [elements , setElements ] = useState([])
+  const [elements, setElements] = useState([]);
 
   return (
-    <div>
-        <Navbar  />
-        <SideBar elements={elements} setElements={setElements}/>
-        <CanvasWorkspace elements={elements} setElements={setElements}/>
-
-    </div>
-  )
+    <Provider store={elementsStore}>
+      <div className="overflow-hidden h-[100vh]">
+        <Navbar />
+        <SideBar elements={elements} setElements={setElements} />
+        <CanvasWorkspace elements={elements} setElements={setElements} />
+      </div>
+    </Provider>
+  );
 }
 
-export default Home
+export default Home;

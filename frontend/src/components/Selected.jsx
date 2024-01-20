@@ -1,7 +1,12 @@
-import React from "react";
+import { useState } from "react";
 
 function Selected(props) {
-const selectedElement = props.selectedElement
+
+  const [resizing, setResizing] = useState(false);
+  const [resizingElement, setResizingElement] = useState(null);
+
+  const selectedElement = props.selectedElement;
+
   const resizeHandles = [
     { cursor: "nwse-resize", x: "left", y: "top" },
     { cursor: "nesw-resize", x: "right", y: "top" },
@@ -10,7 +15,6 @@ const selectedElement = props.selectedElement
   ];
   // console.log(selectedElement)
   if (selectedElement) {
-
     return (
       <g>
         <rect
@@ -40,15 +44,13 @@ const selectedElement = props.selectedElement
               height={10}
               fill="#3498db"
               style={{ cursor: handle.cursor }}
-              //   onMouseDown={(e) => resizeStart(e, selectedElement, handle)}
+                onMouseDown={(e) => props.resizeStart(e, selectedElement, handle)}
             />
           );
         })}
       </g>
     );
-
-  }
-  else{
+  } else {
     // return <text x={100}  w={100}  />
   }
 }

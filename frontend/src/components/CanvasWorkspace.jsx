@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import ContentEditable from "react-contenteditable";
+import { useDispatch, useSelector } from "react-redux";
+import { updateElement, removeElement } from "../slices/elementsSlice";
 import Selected from "./Selected";
 
-function CanvasWorkspace({ elements, setElements }) {
+function CanvasWorkspace() {
   const svgWidth = 800;
   const svgHeight = 600;
 
@@ -12,6 +13,10 @@ function CanvasWorkspace({ elements, setElements }) {
   const [resizing, setResizing] = useState(false);
   const [resizingElement, setResizingElement] = useState(null);
   const [changeText, setChangeText] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const dispatch = useDispatch();
+  const elements = useSelector((state) => state.elements);
+  // console.log(elements);
 
   const getMousePos = (event) => {
     const svgRect = document.querySelector("svg").getBoundingClientRect();
@@ -19,6 +24,26 @@ function CanvasWorkspace({ elements, setElements }) {
     const y = event.clientY - svgRect.top;
     return { x: x, y: y };
   };
+
+  // ------------------------ //
+  // Handling keyboard button //
+  // ------------------------ //
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Delete" && selectedElement) {
+        // setElements((prevElements) =>
+        //   prevElements.filter((element) => element.id !== selectedElement.id)
+        // );
+        dispatch(removeElement(selectedElement.id));
+        setSelectedElement(null);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedElement]);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -43,63 +68,89 @@ function CanvasWorkspace({ elements, setElements }) {
   }, [moving, resizing]);
 
   const selectElements = (element) => {
-    console.log(selectElements)
+    // console.log(selectElements)
     setSelectedElement(element);
   };
 
+  // ------------------------ //
+  // Handling movement of element //
+  // ------------------------ //
   const moveStart = (e, element) => {
     e.preventDefault();
     setMoving(true);
     setMovingElement(element);
+    setSelectedElement(element);
   };
 
   const move = (e) => {
     const pos = getMousePos(e);
     if (moving && movingElement) {
-      setElements((elements) =>
-        elements.map((element) =>
-          element.id === movingElement.id
-            ? {
-                ...element,
-                x: pos.x - element.width / 2,
-                y: pos.y - element.height / 2,
-              }
-            : element
+      dispatch(
+        updateElement(
+          elements.map((element) =>
+            element.id === movingElement.id
+              ? {
+                  ...element,
+                  x: pos.x - element.width / 2,
+                  y: pos.y - element.height / 2,
+                }
+              : element
+          )
         )
       );
-      setSelectedElement((element) =>
-        {
-          return element.id === movingElement.id
-            ? {
-                ...element,
-                x: pos.x - element.width / 2,
-                y: pos.y - element.height / 2,
-              }
-            : element
-        }
-      )
+
+      setSelectedElement((element) => {
+        return element.id === movingElement.id
+          ? {
+              ...element,
+              x: pos.x - element.width / 2,
+              y: pos.y - element.height / 2,
+            }
+          : element;
+      });
     }
+    // if (moving && movingElement) {
+    //   setElements((elements) =>
+    //     elements.map((element) =>
+    //       element.id === movingElement.id
+    //         ? {
+    //             ...element,
+    //             x: pos.x - element.width / 2,
+    //             y: pos.y - element.height / 2,
+    //           }
+    //         : element
+    //     )
+    //   );
+    //   setSelectedElement((element) => {
+    //     return element.id === movingElement.id
+    //       ? {
+    //           ...element,
+    //           x: pos.x - element.width / 2,
+    //           y: pos.y - element.height / 2,
+    //         }
+    //       : element;
+    //   });
+    // }
   };
 
   const moveEnd = () => {
     setMoving(false);
     setMovingElement(null);
-    setSelectedElement(null)
+    setSelectedElement(null);
+    // setIsEditing(false)
   };
 
-  const resizeHandles = [
-    { cursor: "nwse-resize", x: "left", y: "top" },
-    { cursor: "nesw-resize", x: "right", y: "top" },
-    { cursor: "nwse-resize", x: "left", y: "bottom" },
-    { cursor: "nesw-resize", x: "right", y: "bottom" },
-  ];
-
+  // ------------------------ //
+  // Handling resizing of element element //
+  // ------------------------ //
   const resizeStart = (e, element, handle) => {
     e.preventDefault();
+    // console.log("resizeStart", element, handle);
+    setResizingElement({ element, handle });
     setResizing(true);
-   
-  }
+  };
   const resize = (e) => {
+    // console.log("resize", resizingElement);
     const pos = getMousePos(e);
     if (resizing && resizingElement) {
       const { element, handle } = resizingElement;
@@ -112,19 +163,43 @@ function CanvasWorkspace({ elements, setElements }) {
           handle.y === "top"
             ? element.height + (element.y - pos.y)
             : pos.y - element.y;
-        setElements((elements) =>
-          elements.map((el) =>
-            el.id === element.id
-              ? {
-                  ...el,
-                  x: handle.x === "left" ? pos.x : element.x,
-                  y: handle.y === "top" ? pos.y : element.y,
-                  width: Math.max(0, newWidth),
-                  height: Math.max(0, newHeight),
-                }
-              : el
+        dispatch(
+          updateElement(
+            elements.map((el) =>
+              el.id === element.id
+                ? {
+                    ...el,
+                    x: handle.x === "left" ? pos.x : element.x,
+                    y: handle.y === "top" ? pos.y : element.y,
+                    width: Math.max(0, newWidth),
+                    height: Math.max(0, newHeight),
+                  }
+                : el
+            )
           )
         );
+        // setElements((elements) =>
+        //   elements.map((el) =>
+        //     el.id === element.id
+        //       ? {
+        //           ...el,
+        //           x: handle.x === "left" ? pos.x : element.x,
+        //           y: handle.y === "top" ? pos.y : element.y,
+        //           width: Math.max(0, newWidth),
+        //           height: Math.max(0, newHeight),
+        //         }
+        //       : el
+        //   )
+        // );
+        setSelectedElement((element) => {
+          return {
+            ...element,
+            x: handle.x === "left" ? pos.x : element.x,
+            y: handle.y === "top" ? pos.y : element.y,
+            width: Math.max(0, newWidth),
+            height: Math.max(0, newHeight),
+          };
+        });
       }
     }
   };
@@ -134,20 +209,24 @@ function CanvasWorkspace({ elements, setElements }) {
     setResizingElement(null);
   };
 
-  const setText = (e, textElement) => {
-    setElements((elements) =>
-      elements.map((element) =>
-        element.id === textElement.id
-          ? {
-              ...element,
-              text: e.target.value,
-            }
-          : element
+  const handleContentChange = (e, textElement) => {
+    const newText = e.target.value;
+
+    // setElements((elements) =>
+    //   elements.map((element) =>
+    //     element.id === textElement.id ? { ...element, text: newText } : element
+    //   )
+    // );
+    dispatch(
+      updateElement(
+        elements.map((element) =>
+          element.id === textElement.id
+            ? { ...element, text: newText }
+            : element
+        )
       )
     );
   };
-
- console.log(selectedElement)
 
   return (
     <div className="relative top-[50px] left-[400px]">
@@ -168,15 +247,20 @@ function CanvasWorkspace({ elements, setElements }) {
                     x={element.x}
                     y={element.y}
                     onClick={() => selectElements(element)}
-                    onMouseDown={(e) => selectedElement && moveStart(e, element)}
+                    onMouseDown={(e) => moveStart(e, element)}
                     onMouseOver={(e) =>
                       selectedElement && resizeStart(e, element)
                     }
                   />
-                  <Selected selectedElement={selectedElement} setSelectedElement={setSelectedElement} />
+                  <Selected
+                    resizeStart={resizeStart}
+                    selectedElement={selectedElement}
+                    setSelectedElement={setSelectedElement}
+                  />
                 </g>
               );
             } else if (element.type === "text") {
+              console.log(element);
               return (
                 <g key={index}>
                   <foreignObject
@@ -184,9 +268,50 @@ function CanvasWorkspace({ elements, setElements }) {
                     y={element.y}
                     width={element.width}
                     height={element.height}
+                    onClick={() => selectElements(element)}
+                    onDoubleClick={() => setIsEditing(true)}
+                    onBlur={() => setIsEditing(false)}
                   >
                     <div
-                      contentEditable={true}
+                      className="h-full w-full"
+                      onMouseDown={(e) => !isEditing && moveStart(e, element)}
+                    >
+                      {isEditing ? (
+                        <textarea
+                          // type="text"
+                          value={element.text}
+                          onChange={(e) => handleContentChange(e, element)}
+                          // style={{
+                          //   width: "100%",
+                          //   height: "100%",
+                          //   fontSize: "20px",
+                          //   fontFamily: "Arial",
+                          //   color: "black",
+                          //   boxSizing: "border-box",
+                          // }}
+                          style={{ overflowWrap: "break-word" }}
+                          className="h-full w-full "
+                        />
+                      ) : (
+                        <span>{element.text}</span>
+                      )}
+                    </div>
+                  </foreignObject>
+                  <Selected
+                    selectedElement={selectedElement}
+                    setSelectedElement={setSelectedElement}
+                    resizeStart={resizeStart}
+                  />
+                  {/* <foreignObject
+                    x={element.x}
+                    y={element.y}
+                    width={element.width}
+                    height={element.height}
+                    onClick={() => selectElements(element)}
+                    onDoubleClick={() => setChangeText(!changeText)}
+                  >
+                    <div
+                      contentEditable={changeText}
                       style={{
                         fontFamily: "Arial",
                         fontSize: "20px",
@@ -197,12 +322,10 @@ function CanvasWorkspace({ elements, setElements }) {
                         overflow: "hidden",
                       }}
                       dangerouslySetInnerHTML={{ __html: element.text }}
-                      ref={textRef}
                       onMouseDown={(e) => moveStart(e, element)}
-                      onClick={() => selectElements(element)}
+                      onInput={(e) => handleContentChange(e, element)}
                     />
-                  </foreignObject>
-                  <Selected selectedElement={selectedElement} setSelectedElement={setSelectedElement} />
+                  </foreignObject> */}
                 </g>
               );
             }
