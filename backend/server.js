@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 import bodyParser from "body-parser";
 import assetsRouter from "./router/assetsRouter.js"
 import Asset from "./model/assetsModel.js";
+import savedRouter from "./router/savedRouter.js"
 
 let assetsArray = [
   {
@@ -154,6 +155,7 @@ app.use(morgan("common"));
 
 // ----- Router ----- //
 app.use("/api/assets" , assetsRouter)
+app.use("/api/saved" , savedRouter)
 // app.listen(3000, () => console.log("Server running on port 3000"));
 
 app.use((err, req, res, next) => {
