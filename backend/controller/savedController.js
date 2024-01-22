@@ -12,13 +12,15 @@ export const getSaved = async (req, res) => {
 
 // Create a new saved project
 export const createtSaved = async (req, res) => {
-  const { userId, projectName, elements } = req.body;
+  const { userId, projectName, elements, width, height } = req.body;
 
   try {
     const newProject = new SavedProject({
       userId,
       projectName,
-      elements
+      elements,
+      width,
+      height,
     });
 
     const savedProject = await newProject.save();
@@ -44,12 +46,13 @@ export const getSaveduId = async (req, res) => {
 export const getSavedpID = async (req, res) => {
   const projectId = req.params.projectId;
 
+  console.log("Received projectId:", projectId);
   try {
     const project = await SavedProject.findById(projectId);
     if (!project) {
-      return res.status(404).json({ message: 'Project not found' });
+      return res.status(404).json({ message: "Project not found" });
     }
-    return res.status(200).json(projects);
+    return res.status(200).json(project);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -59,16 +62,17 @@ export const getSavedpID = async (req, res) => {
 export const putSaved = async (req, res) => {
   const projectId = req.params.projectId;
   const { projectName, elements } = req.body;
+  console.log(elements);
 
   try {
     const updatedProject = await SavedProject.findByIdAndUpdate(
       projectId,
       { projectName, elements },
-      { new: true } 
+      { new: true }
     );
 
     if (!updatedProject) {
-      return res.status(404).json({ message: 'Project not found' });
+      return res.status(404).json({ message: "Project not found" });
     }
 
     return res.status(200).json(updatedProject);
@@ -85,12 +89,11 @@ export const deleteSaved = async (req, res) => {
     const deletedProject = await SavedProject.findByIdAndDelete(projectId);
 
     if (!deletedProject) {
-      return res.status(404).json({ message: 'Project not found' });
+      return res.status(404).json({ message: "Project not found" });
     }
 
-    return res.status(200).json({ message: 'Project deleted successfully' });
+    return res.status(200).json({ message: "Project deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-

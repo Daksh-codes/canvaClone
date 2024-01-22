@@ -20,4 +20,4 @@ const templateSchema = new mongoose.Schema({
 
 const Template = mongoose.model('Template', templateSchema);
 
-module.exports = Template;
+export default Template 

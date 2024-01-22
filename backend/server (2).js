@@ -5,11 +5,12 @@ import morgan from "morgan";
 import helmet from "helmet";
 import mongoose from "mongoose";
 import bodyParser from "body-parser";
-import assetsRouter from "./router/assetsRouter.js"
-import Asset from "./model/assetsModel.js";
-import savedRouter from "./router/savedRouter.js"
-import userRouter from "./router/userRourer.js"
+import assetsRouter from "./router/assetsRouter.js";
+import savedRouter from "./router/savedRouter.js";
 import TemplateRouter  from "./router/TemplateRouter.js";
+import Asset from "./model/assetsModel.js";
+import SavedProject from "./model/savedProject.js";
+import template from "./model/template.js";
 
 let assetsArray = [
   {
@@ -158,7 +159,6 @@ app.use(morgan("common"));
 // ----- Router ----- //
 app.use("/api/assets" , assetsRouter)
 app.use("/api/saved" , savedRouter)
-app.use("/api/auth" , userRouter )
 app.use("/api/temp" , TemplateRouter)
 // app.listen(3000, () => console.log("Server running on port 3000"));
 
